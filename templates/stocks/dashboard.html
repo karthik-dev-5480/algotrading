@@ -1,0 +1,46 @@
+<html>
+<head>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <h1>Live Stock Candles</h1>
+
+  {% for stock in stocks %}
+    <h1>{{ stock.symbol }}</h1>
+    <div id="chart-{{ stock.symbol }}" style="height: 400px;"></div>
+    <script>
+      function updateChart_{{ stock.symbol|slugify }}() {
+        fetch("/stocks/candles/{{ stock.symbol|urlencode }}/")
+          .then(res => res.json())
+          .then(data => {
+            if (data.error) {
+              console.error("Error fetching data for {{ stock.symbol }}:", data.error);
+              return;
+            }
+
+            const trace = {
+              x: data.timestamps,
+              open: data.open,
+              high: data.high,
+              low: data.low,
+              close: data.close,
+              type: 'candlestick',
+              xaxis: 'x',
+              yaxis: 'y'
+            };
+
+            Plotly.newPlot("chart-{{ stock.symbol }}", [trace], {
+              title: "{{ stock.symbol }}",
+              dragmode: 'zoom',
+              margin: { t: 40 },
+              xaxis: { rangeslider: { visible: false } }
+            });
+          });
+      }
+
+      updateChart_{{ stock.symbol|slugify }}();
+      setInterval(updateChart_{{ stock.symbol|slugify }}, 60000);
+    </script>
+  {% endfor %}
+</body>
+</html>
